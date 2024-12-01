@@ -1,0 +1,70 @@
+<html>
+	<head>
+		<head>
+	        <meta charset="utf-8">
+	        <title>Game Dashboard</title>
+	        <link href="styles/style.css" rel="stylesheet" type="text/css" />
+	    </head>
+	</head>
+	<body>
+		<div id="main">
+			<table id="game_table" class="table-sort table-arrows">
+				<thead>
+					<tr>
+						<th>ID</td>
+						<th>NAME</td>
+						<th>PRICE</td>
+						<th>HOURS PLAYED</td>
+					</tr>
+				</thead>
+				<tbody id="table_body">
+				</tbody>
+			</table>
+		</div>
+	</body>
+	<script src="https://cdn.jsdelivr.net/npm/table-sort-js/table-sort.min.js"></script>
+	<script>
+		var main = document.getElementById("main");
+		var table = document.getElementById("table_body");
+
+		const apiKey = 'DFAD9E2A0CADA364D1A997B0AB42E5EE';  // Replace with your Steam API key
+		const steamId = '76561198064182031';  // Replace with the Steam user's ID
+
+		console.log("RETRIEVING GAMES")
+
+		fetch(`https://cors-anywhere.herokuapp.com/https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${apiKey}&steamid=${steamId}&format=json`)
+			.then(response => response.json())
+			.then(owned_games => {
+				console.log(owned_games);
+				for (let i = 0; i < owned_games.response.games.length; i++) {
+					let game_id = owned_games.response.games[i].appid;
+					let playtime = owned_games.response.games[i].playtime_forever
+					fetch(`https://cors-anywhere.herokuapp.com/https://steamspy.com/api.php?request=appdetails&appid=${game_id}`)
+					.then(response => response.json())
+					.then(game_data => {
+						//console.log(game_data);
+						const game_row = document.createElement("tr");
+
+						const id_cell = document.createElement("td")
+						id_cell.innerText = game_data.appid;
+						game_row.appendChild(id_cell);
+
+						const name_cell = document.createElement("td")
+						name_cell.innerText = game_data.name;
+						game_row.appendChild(name_cell);
+
+						const price_cell = document.createElement("td")
+						price_cell.innerText = String(game_data.price/100) + " USD";
+						game_row.appendChild(price_cell);
+
+						const playtime_cell = document.createElement("td")
+						playtime_cell.innerText = String(Math.round(playtime/60)) + " hours";
+						game_row.appendChild(playtime_cell);
+
+						table.appendChild(game_row);
+					})
+				}
+		  })
+		  .catch(error => console.error('Error fetching data:', error));
+	</script>
+</html>
