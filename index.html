@@ -8,6 +8,9 @@
 	</head>
 	<body>
 		<div id="main">
+			<div id="profile">
+				TEST
+			</div>
 			<table id="game_table" class="table-sort table-arrows">
 				<thead>
 					<tr>
@@ -15,6 +18,7 @@
 						<th>NAME</td>
 						<th>PRICE</td>
 						<th>HOURS PLAYED</td>
+						<th>PRICE / HOUR</td>
 					</tr>
 				</thead>
 				<tbody id="table_body">
@@ -35,14 +39,14 @@
 		fetch(`https://cors-anywhere.herokuapp.com/https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${apiKey}&steamid=${steamId}&format=json`)
 			.then(response => response.json())
 			.then(owned_games => {
-				console.log(owned_games);
+				//console.log(owned_games);
 				for (let i = 0; i < owned_games.response.games.length; i++) {
 					let game_id = owned_games.response.games[i].appid;
 					let playtime = owned_games.response.games[i].playtime_forever
 					fetch(`https://cors-anywhere.herokuapp.com/https://steamspy.com/api.php?request=appdetails&appid=${game_id}`)
 					.then(response => response.json())
 					.then(game_data => {
-						//console.log(game_data);
+						console.log(game_data);
 						const game_row = document.createElement("tr");
 
 						const id_cell = document.createElement("td")
@@ -54,12 +58,26 @@
 						game_row.appendChild(name_cell);
 
 						const price_cell = document.createElement("td")
-						price_cell.innerText = String(game_data.price/100) + " USD";
+						if ((game_data.price == 0) || (game_data.price == null)){
+							price_cell.innerText = "FREE"
+						} else {
+							price_cell.innerText = String(game_data.price/100) + " $";
+						}
 						game_row.appendChild(price_cell);
 
 						const playtime_cell = document.createElement("td")
 						playtime_cell.innerText = String(Math.round(playtime/60)) + " hours";
 						game_row.appendChild(playtime_cell);
+
+						const ph_ratio_cell = document.createElement("td")
+						if ((game_data.price == 0) || (game_data.price == null) || (playtime == 0))
+						{
+							ph_ratio_cell.innerText = "N/A"
+						} else {
+							let ratio = (game_data.price/100)/(playtime/60)
+							ph_ratio_cell.innerText = ratio.toFixed(3)
+						}
+						game_row.appendChild(ph_ratio_cell);
 
 						table.appendChild(game_row);
 					})
