@@ -12,6 +12,9 @@
 				<span> STEAM ID </span>
 				<input type="number" id="steam_id_input">
 				<button onclick="get_data()">GET DATA</button>
+				<div class="chart_div">
+					<canvas id="myChart" style="width:100%;max-width:600px"></canvas>
+				</div>
 			</div>
 			<table id="game_table" class="table-sort table-arrows">
 				<thead>
@@ -30,18 +33,26 @@
 		</div>
 	</body>
 	<script src="https://cdn.jsdelivr.net/npm/table-sort-js/table-sort.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 	<script src="./scripts/hltb.js"></script>
 	<script>
-
-		var main = document.getElementById("main");
-		var table = document.getElementById("table_body");
+		const main = document.getElementById("main");
+		const table = document.getElementById("table_body");
 
 		const apiKey = 'DFAD9E2A0CADA364D1A997B0AB42E5EE';  // Replace with your Steam API key
 		const steamId = '76561198064182031';  // Replace with the Steam user's ID
 
-		let games = []
-		let steam_games = []
+		let games = [];
+		let steam_games = [];
 
+		let most_played = [];
+		let most_played_names = [];
+		let most_played_hours = [];
+
+		let total_price = 0;
+		let total_played = 0;
+
+		// Game Object - contains all datas about games
 		function Game(source = "UNKNOWN", id = -1, name = "UNKNOWN", price = -1, played = -1) {
 		 	this.source = source;
 			this.id = id;
@@ -60,7 +71,13 @@
 				let new_game = new Game("steam", game_info.appid, game_info.name, game_info.price/100, Math.round(steam_games[i].playtime_forever/60));
 				//console.log(new_game);
 				add_game_row(new_game);
+				total_price += new_game.price;
+				total_played += new_game.played;
+
+				// Check if the game is in the 10 most played
+				check_most_played(new_game);
 			}
+			build_chart();
 		}
 		run();
 
@@ -68,7 +85,7 @@
 		async function get_steam_games(user_id) {
 			try {
 		        console.log(`Getting games from Steam with user ID ${steamId}...`);
-		        const response = await fetch(`https://cors-anywhere.herokuapp.com/https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${apiKey}&steamid=${steamId}&format=json`) // Wait for the fetch to complete
+		        const response = await fetch(`https://cors-anywhere.herokuapp.com/http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${apiKey}&include_played_free_games=1&include_appinfo=1&format=json&steamid=${steamId}`) // Wait for the fetch to complete
 		        if (!response.ok) {
 		            throw new Error(`HTTP error! status: ${response.status}`);
 		        }
@@ -82,13 +99,13 @@
 		// Get details of a Steam game
 		async function get_steam_game_info(game_id) {
 			try {
-		        console.log(`Getting information from game with ID ${game_id}...`);
+		        //console.log(`Getting information from game with ID ${game_id}...`);
 		        const response = await fetch(`https://cors-anywhere.herokuapp.com/https://steamspy.com/api.php?request=appdetails&appid=${game_id}`) // Wait for the fetch to complete
 		        if (!response.ok) {
 		            throw new Error(`HTTP error! status: ${response.status}`);
 		        }
 		        const data = await response.json(); // Wait for the response to be parsed as JSON
-				console.log(data);
+				//console.log(data);
 				return data;
 		    } catch (error) {
 		        console.error("Error fetching data:", error);
@@ -143,6 +160,61 @@
 			new_row.appendChild(ph_ratio_cell);
 
 			table.appendChild(new_row);
+		}
+
+		// Process a game to see if it is one of the 10 most played
+		function check_most_played(game) {
+			// Populate array for the 10 first entries
+			if (most_played.length == 0) {
+				most_played.push(game);
+			} else {
+				for (let i = 0; i < most_played.length; i++) {
+					if (most_played[i].played < game.played) {
+						most_played.splice(i, 0, game);
+						break;
+					}
+				}
+				if (most_played.length > 10) {
+					most_played.pop();
+				}
+			}
+		}
+
+		// Process the list of the most played games to build the chart
+		function build_chart() {
+			for (let i = 0; i < most_played.length; i++) {
+				most_played_names.push(most_played[i].name);
+				most_played_hours.push(most_played[i].played);
+			}
+
+			const barColors = [
+			  "#b91d47",
+			  "#00aba9",
+			  "#2b5797",
+			  "#e8c3b9",
+			  "#1e7145",
+			  "#b91d47",
+			  "#00aba9",
+			  "#2b5797",
+			  "#e8c3b9",
+			  "#1e7145"
+			];
+
+			new Chart("myChart", {
+				type: "pie",
+			  	data: {
+			    	labels: most_played_names,
+			    	datasets: [{
+			      		backgroundColor: barColors,
+			      		data: most_played_hours
+			    	}]
+			  	},
+			  	options: {
+			    	legend: {
+			      		position: 'right' // This moves the labels to the right
+			    	}
+			  	}
+			});
 		}
 
 		function remove_children(node){

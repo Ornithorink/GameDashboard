@@ -23,7 +23,6 @@
     table {
         margin: auto;
         width: 80%;
-        padding: 10px;
     }
 
     .free {
@@ -32,6 +31,13 @@
 
     .small {
         width: 7%;
+    }
+
+    .chart_div {
+        padding: 10px;
+        background-color: #121A24;
+        display: flex;
+        justify-content: flex-end;
     }
 
     #profile {
