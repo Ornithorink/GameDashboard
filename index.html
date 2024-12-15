@@ -87,7 +87,7 @@
 		async function get_steam_games(user_id) {
 			try {
 		        console.log(`Getting games from Steam with user ID ${steamId}...`);
-		        const response = await fetch(`http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${apiKey}&include_played_free_games=1&include_appinfo=1&format=json&steamid=${steamId}`) // Wait for the fetch to complete
+		        const response = await fetch(`https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${apiKey}&include_played_free_games=1&include_appinfo=1&format=json&steamid=${steamId}`) // Wait for the fetch to complete
 		        if (!response.ok) {
 		            throw new Error(`HTTP error! status: ${response.status}`);
 		        }
